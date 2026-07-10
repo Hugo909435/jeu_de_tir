@@ -1,0 +1,103 @@
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { width:100%; height:100%; overflow:hidden; background:#000; touch-action:none;
+  font-family:'Segoe UI', system-ui, sans-serif; user-select:none; -webkit-user-select:none; }
+#game { position:fixed; inset:0; width:100%; height:100%; display:block; }
+.hidden { display:none !important; }
+
+/* ===== Overlays ===== */
+.overlay { position:fixed; inset:0; z-index:50; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:18px; text-align:center;
+  background:rgba(10,16,28,.88); color:#fff; padding:20px; }
+.overlay h1 { font-size:clamp(36px,8vw,72px); letter-spacing:4px; font-weight:900;
+  text-shadow:0 4px 0 rgba(0,0,0,.4); }
+.overlay .sub { opacity:.85; font-size:clamp(13px,3vw,17px); }
+.overlay .help { opacity:.6; font-size:12px; line-height:1.7; max-width:560px; }
+.overlay button { cursor:pointer; border:none; border-radius:12px; font-weight:800; color:#fff; }
+#btn-start, #btn-replay, #btn-resume { font-size:22px; padding:14px 52px;
+  background:#2e6df6; box-shadow:0 5px 0 #1c4bb8; letter-spacing:2px; }
+#btn-start:active, #btn-replay:active, #btn-resume:active { transform:translateY(3px); box-shadow:0 2px 0 #1c4bb8; }
+
+.weapons { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
+.wcard { display:flex; flex-direction:column; gap:6px; padding:16px 22px; min-width:210px;
+  background:#1b2740; border:3px solid transparent; border-radius:14px; }
+.wcard.selected { border-color:#2e6df6; background:#213458; }
+.wcard .wname { font-size:19px; font-weight:800; }
+.wcard .wstat { font-size:13px; opacity:.75; }
+
+/* ===== HUD ===== */
+#hud { position:fixed; inset:0; z-index:10; pointer-events:none; color:#fff; }
+#scores { position:absolute; top:calc(10px + env(safe-area-inset-top)); left:50%; transform:translateX(-50%);
+  display:flex; gap:10px; align-items:center; font-weight:700; font-size:15px; }
+#scores .pill { padding:5px 14px; border-radius:20px; background:rgba(0,0,0,.45); }
+#scores .pill.blue { border-bottom:3px solid #2e6df6; }
+#scores .pill.red { border-bottom:3px solid #e23c3c; }
+#scores .goal { opacity:.8; font-size:13px; }
+#scores b { font-size:18px; }
+
+#killfeed { position:absolute; top:calc(12px + env(safe-area-inset-top)); right:12px;
+  display:flex; flex-direction:column; gap:4px; align-items:flex-end; font-size:13px; }
+.feeditem { background:rgba(0,0,0,.5); padding:4px 10px; border-radius:6px; }
+.feeditem .blue { color:#7ea6ff; font-weight:700; }
+.feeditem .red { color:#ff8a8a; font-weight:700; }
+
+#crosshair { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:34px; height:34px; border:2px solid rgba(255,255,255,.75); border-radius:50%; }
+#crosshair .dot { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:4px; height:4px; background:#fff; border-radius:50%; }
+#hitmarker { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  font-size:30px; font-weight:900; opacity:0; transition:opacity .12s; }
+#hitmarker.show { opacity:1; }
+#hitmarker.head { color:#ff4040; }
+
+#hpwrap { position:absolute; left:16px; bottom:calc(16px + env(safe-area-inset-bottom));
+  width:min(230px,34vw); height:20px; background:rgba(0,0,0,.5); border-radius:10px; overflow:hidden; }
+#hpbar { height:100%; width:100%; background:#4caf50; border-radius:10px; transition:width .15s, background .15s; }
+#hpnum { position:absolute; inset:0; text-align:center; font-size:13px; font-weight:800; line-height:20px;
+  text-shadow:0 1px 2px #000; }
+
+#ammo { position:absolute; right:16px; bottom:calc(16px + env(safe-area-inset-bottom));
+  text-align:right; text-shadow:0 2px 3px #000; }
+#ammo b { font-size:34px; }
+#ammo span { font-size:16px; opacity:.8; }
+#reloadTxt { display:none; font-size:13px; font-weight:800; color:#ffc94d; letter-spacing:1px; }
+#ammo.reloading #reloadTxt { display:block; }
+
+#protection { position:absolute; left:50%; bottom:calc(70px + env(safe-area-inset-bottom));
+  transform:translateX(-50%); background:rgba(46,109,246,.75); padding:5px 14px; border-radius:16px;
+  font-size:13px; font-weight:700; display:none; }
+#protection.show { display:block; }
+
+#damageFlash { position:absolute; inset:0; box-shadow:inset 0 0 120px 40px rgba(220,30,30,.75);
+  opacity:0; transition:opacity .4s; }
+#scope { position:absolute; inset:0; display:none;
+  background:radial-gradient(circle at 50% 50%, transparent 0 29%, rgba(5,5,8,.97) 30%); }
+#scope.show { display:block; }
+#scope .hline { position:absolute; top:50%; left:0; right:0; height:1px; background:rgba(255,255,255,.7); }
+#scope .vline { position:absolute; left:50%; top:0; bottom:0; width:1px; background:rgba(255,255,255,.7); }
+
+#deathOverlay { position:absolute; inset:0; display:none; flex-direction:column; gap:10px;
+  align-items:center; justify-content:center; background:rgba(60,0,0,.45);
+  font-size:30px; font-weight:900; text-shadow:0 3px 5px #000; }
+#deathOverlay.show { display:flex; }
+#respawnTxt { font-size:17px; font-weight:600; opacity:.9; }
+
+/* ===== Contrôles mobile ===== */
+#mobile { position:fixed; inset:0; z-index:20; pointer-events:none; }
+#mobile > * { pointer-events:auto; }
+.stick { position:absolute; width:120px; height:120px; border-radius:50%;
+  background:rgba(255,255,255,.10); border:2px solid rgba(255,255,255,.30); }
+.stick .knob { position:absolute; left:50%; top:50%; margin:-26px 0 0 -26px; width:52px; height:52px;
+  border-radius:50%; background:rgba(255,255,255,.45); }
+#stick-move { left:calc(20px + env(safe-area-inset-left)); bottom:calc(50px + env(safe-area-inset-bottom)); }
+#stick-look { right:calc(20px + env(safe-area-inset-right)); bottom:calc(50px + env(safe-area-inset-bottom)); }
+#mobile button { position:absolute; border:none; border-radius:50%; color:#fff; font-weight:900;
+  background:rgba(0,0,0,.45); border:2px solid rgba(255,255,255,.35); }
+#btn-fire { right:calc(150px + env(safe-area-inset-right)); bottom:calc(80px + env(safe-area-inset-bottom));
+  width:84px; height:84px; font-size:18px; background:rgba(226,60,60,.55); }
+#btn-ads { right:calc(46px + env(safe-area-inset-right)); bottom:calc(185px + env(safe-area-inset-bottom));
+  width:58px; height:58px; font-size:14px; }
+#btn-ads.on { background:rgba(46,109,246,.7); }
+#btn-jump { right:calc(160px + env(safe-area-inset-right)); bottom:calc(185px + env(safe-area-inset-bottom));
+  width:58px; height:58px; font-size:12px; }
+#btn-reload { left:calc(160px + env(safe-area-inset-left)); bottom:calc(70px + env(safe-area-inset-bottom));
+  width:52px; height:52px; font-size:16px; }
