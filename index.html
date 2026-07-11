@@ -25,9 +25,15 @@
       <span class="wstat">5 balles · lent mais létal</span>
     </button>
   </div>
+  <div class="opts">
+    <label for="sens">Sensibilité visée</label>
+    <input type="range" id="sens" min="0.3" max="2" step="0.05" value="1">
+    <span id="sensVal">×1.00</span>
+    <button id="btn-sound">🔊 Son activé</button>
+  </div>
   <button id="btn-start">JOUER</button>
-  <p class="help">PC : ZQSD/WASD bouger · Souris viser · Clic tirer · Clic droit viser (ADS) · R recharger · Espace sauter<br>
-  Mobile : joystick gauche bouger · joystick droit viser · boutons TIR / SAUT / R / ADS</p>
+  <p class="help">PC : ZQSD/WASD bouger · Souris viser · Clic tirer · Clic droit viser (ADS) · R recharger · 1/2 ou molette changer d'arme · Espace sauter · Maj sprinter · M couper le son<br>
+  Mobile : joystick gauche bouger (à fond = sprint) · joystick droit viser · boutons TIR / SAUT / R / ADS / ARME</p>
 </div>
 
 <!-- ===== HUD ===== -->
@@ -39,9 +45,12 @@
   </div>
   <div id="killfeed"></div>
   <div id="crosshair"><div class="dot"></div></div>
+  <svg id="reloadRing" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20"/></svg>
   <div id="hitmarker">✕</div>
+  <div id="dmgdir"><div class="wedge"></div></div>
+  <div id="kd">☠ <b id="kdNum">0 / 0</b></div>
   <div id="hpwrap"><div id="hpbar"></div><span id="hpnum">200</span></div>
-  <div id="ammo"><b id="ammoNum">25</b><span> / ∞</span><div id="reloadTxt">RECHARGEMENT…</div></div>
+  <div id="ammo"><div id="weaponName">Fusil d'assaut</div><b id="ammoNum">25</b><span> / ∞</span><div id="reloadTxt">RECHARGEMENT…</div><div id="reloadWrap"><div id="reloadBar"></div></div></div>
   <div id="protection">🛡 Protection de spawn</div>
   <div id="damageFlash"></div>
   <div id="scope"><div class="hline"></div><div class="vline"></div></div>
@@ -56,6 +65,7 @@
   <button id="btn-ads">ADS</button>
   <button id="btn-jump">SAUT</button>
   <button id="btn-reload">R</button>
+  <button id="btn-weapon">AR</button>
 </div>
 
 <!-- ===== PAUSE / REPRISE (PC) ===== -->
@@ -74,6 +84,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="js/map.js"></script>
 <script src="js/controls.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/effects.js"></script>
 <script src="js/game.js"></script>
 </body>
 </html>

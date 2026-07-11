@@ -24,6 +24,13 @@ html, body { width:100%; height:100%; overflow:hidden; background:#000; touch-ac
 .wcard .wname { font-size:19px; font-weight:800; }
 .wcard .wstat { font-size:13px; opacity:.75; }
 
+.opts { display:flex; gap:12px; align-items:center; flex-wrap:wrap; justify-content:center;
+  font-size:14px; opacity:.9; }
+.opts input[type=range] { width:150px; accent-color:#2e6df6; }
+#sensVal { font-weight:700; min-width:48px; text-align:left; }
+#btn-sound { font-size:14px; padding:8px 16px; background:#1b2740; border:2px solid #2e6df6;
+  border-radius:10px; }
+
 /* ===== HUD ===== */
 #hud { position:fixed; inset:0; z-index:10; pointer-events:none; color:#fff; }
 #scores { position:absolute; top:calc(10px + env(safe-area-inset-top)); left:50%; transform:translateX(-50%);
@@ -44,10 +51,33 @@ html, body { width:100%; height:100%; overflow:hidden; background:#000; touch-ac
   width:34px; height:34px; border:2px solid rgba(255,255,255,.75); border-radius:50%; }
 #crosshair .dot { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
   width:4px; height:4px; background:#fff; border-radius:50%; }
+/* Anneau de progression du rechargement autour du réticule
+   (dashoffset piloté chaque frame par game.js, départ en haut grâce au rotate) */
+#reloadRing { position:absolute; left:50%; top:50%; width:52px; height:52px;
+  transform:translate(-50%,-50%) rotate(-90deg); display:none; }
+#reloadRing.show { display:block; }
+#reloadRing circle { fill:none; stroke:#ffc94d; stroke-width:4; stroke-linecap:round;
+  stroke-dasharray:125.66; stroke-dashoffset:125.66;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+
 #hitmarker { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
   font-size:30px; font-weight:900; opacity:0; transition:opacity .12s; }
 #hitmarker.show { opacity:1; }
 #hitmarker.head { color:#ff4040; }
+
+/* Indicateur directionnel de dégâts : flèche rouge autour du réticule,
+   orientée vers le tireur (rotation posée en JS) */
+#dmgdir { position:absolute; left:50%; top:50%; width:150px; height:150px;
+  transform:translate(-50%,-50%); opacity:0; transition:opacity .5s; }
+#dmgdir.show { opacity:1; transition:none; }
+#dmgdir .wedge { position:absolute; left:50%; top:-8px; transform:translateX(-50%);
+  width:0; height:0; border-left:15px solid transparent; border-right:15px solid transparent;
+  border-bottom:16px solid rgba(226,60,60,.9);
+  filter:drop-shadow(0 0 4px rgba(226,60,60,.8)); }
+
+#kd { position:absolute; left:16px; bottom:calc(44px + env(safe-area-inset-bottom));
+  font-size:13px; font-weight:700; text-shadow:0 1px 3px #000; opacity:.9; }
+#kd b { font-size:15px; }
 
 #hpwrap { position:absolute; left:16px; bottom:calc(16px + env(safe-area-inset-bottom));
   width:min(230px,34vw); height:20px; background:rgba(0,0,0,.5); border-radius:10px; overflow:hidden; }
@@ -59,8 +89,14 @@ html, body { width:100%; height:100%; overflow:hidden; background:#000; touch-ac
   text-align:right; text-shadow:0 2px 3px #000; }
 #ammo b { font-size:34px; }
 #ammo span { font-size:16px; opacity:.8; }
+#weaponName { font-size:12px; font-weight:800; letter-spacing:1px; text-transform:uppercase; opacity:.75; }
 #reloadTxt { display:none; font-size:13px; font-weight:800; color:#ffc94d; letter-spacing:1px; }
 #ammo.reloading #reloadTxt { display:block; }
+/* Barre de progression du rechargement (remplie chaque frame par game.js) */
+#reloadWrap { display:none; width:140px; height:6px; margin:4px 0 0 auto;
+  background:rgba(0,0,0,.55); border-radius:3px; overflow:hidden; }
+#ammo.reloading #reloadWrap { display:block; }
+#reloadBar { height:100%; width:0%; background:#ffc94d; }
 
 #protection { position:absolute; left:50%; bottom:calc(70px + env(safe-area-inset-bottom));
   transform:translateX(-50%); background:rgba(46,109,246,.75); padding:5px 14px; border-radius:16px;
@@ -101,3 +137,5 @@ html, body { width:100%; height:100%; overflow:hidden; background:#000; touch-ac
   width:58px; height:58px; font-size:12px; }
 #btn-reload { left:calc(160px + env(safe-area-inset-left)); bottom:calc(70px + env(safe-area-inset-bottom));
   width:52px; height:52px; font-size:16px; }
+#btn-weapon { right:calc(46px + env(safe-area-inset-right)); bottom:calc(80px + env(safe-area-inset-bottom));
+  width:58px; height:58px; font-size:11px; }
