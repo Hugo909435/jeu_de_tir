@@ -11,13 +11,16 @@ const MapBuilder = (() => {
     const mat = c => mats[c] || (mats[c] = new THREE.MeshLambertMaterial({ color: c }));
 
     // Boîte axis-aligned : (largeur x, hauteur y, profondeur z, centre x/y/z)
+    // solid : true = bloque balles + déplacement · 'ray' = bloque seulement les
+    // balles (habillage plaqué sur un mur, éléments hors de portée du joueur)
+    // · false = décor pur (nuages…)
     function box(w, h, d, x, y, z, color, solid = true) {
       const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(color));
       m.position.set(x, y, z);
       scene.add(m);
       if (solid) {
         solids.push(m);
-        colliders.push(new THREE.Box3(
+        if (solid !== 'ray') colliders.push(new THREE.Box3(
           new THREE.Vector3(x - w / 2, y - h / 2, z - d / 2),
           new THREE.Vector3(x + w / 2, y + h / 2, z + d / 2)));
       }
@@ -34,9 +37,10 @@ const MapBuilder = (() => {
     const ground = new THREE.Mesh(new THREE.PlaneGeometry(44, 64), mat(0x7cb45b));
     ground.rotation.x = -Math.PI / 2;
     scene.add(ground);
-    box(7, 0.05, 60, 0, 0.025, 0, 0x565b60, false);      // rue
-    box(2, 0.06, 60, -4.5, 0.03, 0, 0xb9bdc1, false);     // trottoirs
-    box(2, 0.06, 60, 4.5, 0.03, 0, 0xb9bdc1, false);
+    solids.push(ground); // les balles s'arrêtent au sol (pas de collider : le sol est géré par la gravité)
+    box(7, 0.05, 60, 0, 0.025, 0, 0x565b60, 'ray');      // rue
+    box(2, 0.06, 60, -4.5, 0.03, 0, 0xb9bdc1, 'ray');     // trottoirs
+    box(2, 0.06, 60, 4.5, 0.03, 0, 0xb9bdc1, 'ray');
 
     /* ---------- Murs d'enceinte ---------- */
     const TAN = 0xcbb79a;
@@ -52,10 +56,10 @@ const MapBuilder = (() => {
       wallX(z, -20, -14, 0, 2.2, FENCE);
       wallX(z, -9, 5, 0, 2.2, FENCE);
       wallX(z, 10, 20, 0, 2.2, FENCE);
-      // lisse supérieure décorative façon palissade
-      box(6.2, 0.18, 0.55, -17, 2.28, z, FENCE, false);
-      box(14.2, 0.18, 0.55, -2, 2.28, z, FENCE, false);
-      box(10.2, 0.18, 0.55, 15, 2.28, z, FENCE, false);
+      // lisse supérieure façon palissade (solide : hors de portée, mais arrête les balles rasantes)
+      box(6.2, 0.18, 0.55, -17, 2.28, z, FENCE);
+      box(14.2, 0.18, 0.55, -2, 2.28, z, FENCE);
+      box(10.2, 0.18, 0.55, 15, 2.28, z, FENCE);
     }
 
     /* ---------- Maison à étage ----------
@@ -72,13 +76,12 @@ const MapBuilder = (() => {
       wallZ(fx, cz + 2, cz + 4, 0, 1, wallC);
       wallZ(fx, cz + 2, cz + 4, 2.2, 3, wallC);
       wallZ(fx, cz + 4, z2, 0, 3, wallC);
-      // Façade étage : deux fenêtres (allège à 4, haut à 5.2)
+      // Façade étage : deux fenêtres franchissables (allège à 4, ouvertes jusqu'au toit)
+      // Le joueur saute sur l'allège puis bascule dehors (pas de retour possible : 4 m)
       wallZ(fx, z1, cz - 4, 3, 6, wallC);
       wallZ(fx, cz - 4, cz - 2, 3, 4, wallC);
-      wallZ(fx, cz - 4, cz - 2, 5.2, 6, wallC);
       wallZ(fx, cz - 2, cz + 2, 3, 6, wallC);
       wallZ(fx, cz + 2, cz + 4, 3, 4, wallC);
-      wallZ(fx, cz + 2, cz + 4, 5.2, 6, wallC);
       wallZ(fx, cz + 4, z2, 3, 6, wallC);
       // Mur arrière : porte au RDC
       wallZ(bx, z1, cz - 1, 0, 6, wallC);
@@ -104,19 +107,20 @@ const MapBuilder = (() => {
       // Toit plat
       box(8.6, 0.3, 10.6, cx, 6.15, cz, roofC);
 
-      // Habillage blanc (décor non bloquant) : encadrements de porte et fenêtres
+      // Habillage blanc plaqué sur les murs : arrête les balles, pas d'AABB
+      // (dépasse de 5 cm du mur, un collider gênerait la glisse le long de la façade)
       const W = 0xf5f2e8;
-      box(0.5, 2.5, 0.16, fx, 1.25, cz - 1.1, W, false); // montants de porte
-      box(0.5, 2.5, 0.16, fx, 1.25, cz + 1.1, W, false);
-      box(0.5, 0.16, 2.4, fx, 2.32, cz, W, false);       // linteau
-      box(0.5, 0.14, 2.2, fx, 0.95, cz + 3, W, false);   // fenêtre RDC
-      box(0.5, 0.14, 2.2, fx, 2.28, cz + 3, W, false);
+      box(0.5, 2.5, 0.16, fx, 1.25, cz - 1.1, W, 'ray'); // montants de porte
+      box(0.5, 2.5, 0.16, fx, 1.25, cz + 1.1, W, 'ray');
+      box(0.5, 0.16, 2.4, fx, 2.32, cz, W, 'ray');       // linteau
+      box(0.5, 0.14, 2.2, fx, 0.95, cz + 3, W, 'ray');   // fenêtre RDC
+      box(0.5, 0.14, 2.2, fx, 2.28, cz + 3, W, 'ray');
       for (const zc of [cz - 3, cz + 3]) {               // fenêtres de l'étage
-        box(0.5, 0.14, 2.2, fx, 3.94, zc, W, false);
-        box(0.5, 0.14, 2.2, fx, 5.28, zc, W, false);
+        box(0.5, 0.14, 2.2, fx, 3.94, zc, W, 'ray');
+        box(0.5, 0.14, 2.2, fx, 5.92, zc, W, 'ray');
       }
-      // Porche d'entrée : auvent (décor) sur deux poteaux (solides)
-      box(2.0, 0.18, 3.4, fx + 1.0 * dir, 2.72, cz, roofC, false);
+      // Porche d'entrée : auvent solide (on peut retomber dessus) sur deux poteaux
+      box(2.0, 0.18, 3.4, fx + 1.0 * dir, 2.72, cz, roofC);
       box(0.16, 2.62, 0.16, fx + 1.8 * dir, 1.31, cz - 1.4, W);
       box(0.16, 2.62, 0.16, fx + 1.8 * dir, 1.31, cz + 1.4, W);
     }
@@ -127,16 +131,16 @@ const MapBuilder = (() => {
     /* ---------- Bus central ---------- */
     box(3.4, 3, 9, 0, 1.5, 0, 0xd9a441);
     box(3.0, 0.5, 8.4, 0, 3.25, 0, 0x4a4a4a);            // toit du bus
-    box(3.5, 0.8, 7.6, 0, 2.35, 0, 0x2b3a45, false);     // bande de fenêtres
+    box(3.5, 0.8, 7.6, 0, 2.35, 0, 0x2b3a45);            // bande de fenêtres (dépasse de la caisse : solide)
     for (const [wx, wz] of [[-1.75, -3], [1.75, -3], [-1.75, 3], [1.75, 3]])
-      box(0.25, 0.8, 0.8, wx, 0.4, wz, 0x1e1e1e, false); // roues
+      box(0.25, 0.8, 0.8, wx, 0.4, wz, 0x1e1e1e, 'ray'); // roues
 
     /* ---------- Voitures (carrosserie + cabine + roues) ---------- */
     function car(x, z, c) {
       box(2.2, 1.2, 4.6, x, 0.6, z, c);
       box(1.8, 0.9, 2.2, x, 1.65, z, 0x2b2f33);
       for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]])
-        box(0.22, 0.5, 0.55, x + 1.12 * sx, 0.25, z + 1.45 * sz, 0x1e1e1e, false);
+        box(0.22, 0.5, 0.55, x + 1.12 * sx, 0.25, z + 1.45 * sz, 0x1e1e1e, 'ray');
     }
     car(2, -9, 0x3aa6a0);
     car(-2, 9, 0xd06430);
@@ -155,21 +159,22 @@ const MapBuilder = (() => {
 
     // Marquage central de la rue (on saute la zone cachée par le bus)
     for (let z = -27; z <= 27; z += 4.5)
-      if (Math.abs(z) > 5.5) box(0.18, 0.02, 1.6, 0, 0.06, z, 0xe8d44d, false);
+      if (Math.abs(z) > 5.5) box(0.18, 0.02, 1.6, 0, 0.06, z, 0xe8d44d, 'ray');
 
-    // Lampadaires (mât solide, tête décorative tournée vers la rue)
+    // Lampadaires (mât solide, tête hors de portée : bloque seulement les balles)
     function lamp(x, z, side) {
       box(0.14, 3.7, 0.14, x, 1.85, z, 0x3a3f44);
-      box(0.9, 0.12, 0.3, x + 0.45 * side, 3.66, z, 0x3a3f44, false);
-      box(0.3, 0.14, 0.26, x + 0.8 * side, 3.55, z, 0xffe9a8, false);
+      box(0.9, 0.12, 0.3, x + 0.45 * side, 3.66, z, 0x3a3f44, 'ray');
+      box(0.3, 0.14, 0.26, x + 0.8 * side, 3.55, z, 0xffe9a8, 'ray');
     }
-    lamp(-4.5, -10, 1);
-    lamp(4.5, 10, -1);
+    // (à z=∓13 pour laisser passer le lien de nav porte de maison → rue)
+    lamp(-4.5, -13, 1);
+    lamp(4.5, 13, -1);
 
-    // Boîtes aux lettres devant chaque maison
+    // Boîtes aux lettres devant chaque maison (solides, à l'écart du graphe de nav)
     function mailbox(x, z) {
-      box(0.1, 1.1, 0.1, x, 0.55, z, 0x6d4c33, false);
-      box(0.34, 0.26, 0.5, x, 1.23, z, 0xb3392c, false);
+      box(0.1, 1.1, 0.1, x, 0.55, z, 0x6d4c33);
+      box(0.34, 0.26, 0.5, x, 1.23, z, 0xb3392c);
     }
     mailbox(-6.8, -10.5);
     mailbox(6.8, 10.5);
@@ -187,17 +192,19 @@ const MapBuilder = (() => {
       c.fillStyle = '#b3392c'; c.font = '800 40px sans-serif';
       c.fillText('POPULATION 8', 256, 158);
       const panel = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 1.7),
-        new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv) }));
+        new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), side: THREE.DoubleSide }));
       panel.position.set(x, 3.3, z);
       panel.rotation.y = ry;
       scene.add(panel);
+      solids.push(panel); // le panneau arrête les balles (hors de portée du joueur : pas d'AABB)
       box(0.16, 2.6, 0.16, x - 1.6, 1.3, z, WHITE);
       box(0.16, 2.6, 0.16, x + 1.6, 1.3, z, WHITE);
     }
     billboard(6.4, -28.8, 0);
     billboard(-6.4, 28.8, Math.PI);
 
-    // Mannequins d'essai dans les jardins (décor non bloquant)
+    // Mannequins d'essai dans les jardins (solides : un AABB englobant par mannequin,
+    // placés à l'écart des liens du graphe de navigation)
     function mannequin(x, z, ry) {
       const g = new THREE.Group();
       const part = (w, h, d, px, py, pz) => {
@@ -214,17 +221,21 @@ const MapBuilder = (() => {
       g.position.set(x, 0, z);
       g.rotation.y = ry;
       scene.add(g);
+      g.updateMatrixWorld(true);
+      solids.push(...g.children);
+      colliders.push(new THREE.Box3().setFromObject(g));
     }
     mannequin(-19, -24.5, 0.7);
     mannequin(19, 24.5, -2.3);
     mannequin(-7, -12.3, 2.6);
     mannequin(7, 12.3, -0.5);
 
-    // Arbres en blocs (tronc solide, feuillage décoratif)
+    // Arbres en blocs (tronc et feuillage solides ; le feuillage démarre à 2.2 m,
+    // au-dessus des têtes, donc sans effet sur les déplacements)
     function tree(x, z) {
       box(0.4, 2.4, 0.4, x, 1.2, z, 0x6d4c33);
-      box(2.2, 1.6, 2.2, x, 3.0, z, 0x4e8f46, false);
-      box(1.4, 1.1, 1.4, x, 4.1, z, 0x5da24f, false);
+      box(2.2, 1.6, 2.2, x, 3.0, z, 0x4e8f46);
+      box(1.4, 1.1, 1.4, x, 4.1, z, 0x5da24f);
     }
     tree(-19, -18); tree(19, 18); tree(14, -28); tree(-14, 28);
 
@@ -233,7 +244,8 @@ const MapBuilder = (() => {
     sand.rotation.x = -Math.PI / 2;
     sand.position.y = -0.05;
     scene.add(sand);
-    const mesa = (x, z, w, h, d, c) => box(w, h, d, x, h / 2 - 0.05, z, c, false);
+    solids.push(sand); // même traitement que le sol : les balles s'y arrêtent
+    const mesa = (x, z, w, h, d, c) => box(w, h, d, x, h / 2 - 0.05, z, c, 'ray');
     mesa(0, -95, 60, 10, 18, 0xcfa76e);
     mesa(30, -85, 30, 14, 22, 0xc9a26b);
     mesa(-45, -70, 36, 12, 20, 0xdcb98a);
@@ -245,9 +257,9 @@ const MapBuilder = (() => {
     // Pylône d'essai rayé rouge et blanc, feu au sommet
     for (let i = 0; i < 5; i++) {
       const s = 3 - i * 0.55;
-      box(s, 6, s, 48, 3 + i * 6, -50, i % 2 ? 0xd6d2c8 : 0xb3392c, false);
+      box(s, 6, s, 48, 3 + i * 6, -50, i % 2 ? 0xd6d2c8 : 0xb3392c, 'ray');
     }
-    box(0.6, 0.6, 0.6, 48, 33.3, -50, 0xff5544, false);
+    box(0.6, 0.6, 0.6, 48, 33.3, -50, 0xff5544, 'ray');
     // Nuages en blocs
     for (const [x, y, z, s] of [[-25, 26, -12, 1], [18, 30, -40, 1.4], [35, 27, 8, 1.1],
                                  [-40, 28, 22, 1.3], [8, 32, 45, 1.2], [-12, 29, 60, 0.9]]) {
@@ -267,44 +279,48 @@ const MapBuilder = (() => {
     const sN = N(0, 0, -25), sWN = N(-2.6, 0, -14), sEN = N(2.6, 0, -14);
     const busW = N(-2.6, 0, 0), busE = N(2.6, 0, 0);
     const sWS = N(-2.6, 0, 14), sES = N(2.6, 0, 14), sS = N(0, 0, 25);
-    const carW = N(-4.6, 0, 9), carE = N(4.6, 0, -9); // contournent les voitures
-    // Coins des zones de spawn (alignés sur les passages des clôtures)
+    const carW = N(-5, 0, 9), carE = N(5, 0, -9); // contournent les voitures
+    // Coins des zones de spawn (centrés sur les passages des clôtures)
     const cNW = N(-11.5, 0, -23), cNE = N(7.5, 0, -23);
-    const cSE = N(8.5, 0, 23), cSW = N(-10.5, 0, 23);
-    // Allées latérales
+    const cSE = N(7.5, 0, 23), cSW = N(-11.5, 0, 23);
+    // Allées latérales (le détour autour des caisses passe par hAback/hBback)
     const aW = N(-17, 0, 0), aE = N(17, 0, 0);
     const aWN = N(-17, 0, -14), aES = N(17, 0, 14);
     const aWS = N(-12, 0, 14), aEN = N(12, 0, -14);
-    const dW = N(-14.5, 0, -7), dE = N(14.5, 0, 7); // contournent les caisses
     // Maison A (ouest) : RDC, escalier, étage, fenêtres de tir
-    const hAdoor = N(-6.5, 0, -8), hAin = N(-12, 0, -8), hAback = N(-18.9, 0, -8);
+    // (hAdoor est à l'est des poteaux du porche : un nœud entre les poteaux
+    // rendrait les sorties nord/sud infranchissables en ligne droite)
+    const hAdoor = N(-5.3, 0, -8), hAin = N(-12, 0, -8), hAback = N(-18.9, 0, -8);
     const hAsb = N(-15, 0, -7.6), hAst = N(-15, 3.0, -3.7);
     const hAup = N(-13.2, 3.15, -4.3), hAupC = N(-12, 3.15, -10);
     const hAw1 = N(-9, 3.15, -11), hAw2 = N(-9, 3.15, -5);
     // Maison B (est)
-    const hBdoor = N(6.5, 0, 8), hBin = N(12, 0, 8), hBback = N(18.9, 0, 8);
+    const hBdoor = N(5.3, 0, 8), hBin = N(12, 0, 8), hBback = N(18.9, 0, 8);
     const hBsb = N(15, 0, 8.4), hBst = N(15, 3.0, 12.3);
     const hBup = N(13.2, 3.15, 12.2), hBupC = N(12, 3.15, 6);
     const hBw1 = N(9, 3.15, 5), hBw2 = N(9, 3.15, 11);
 
     [
-      // rue (le bus coupe le passage central : on passe par les côtés)
-      [sN, sWN], [sN, sEN], [sWN, sEN], [sWN, busW], [busW, carW], [carW, sWS],
-      [sEN, carE], [carE, busE], [busE, sES], [sWS, sES], [sWS, sS], [sES, sS],
+      // rue (le bus coupe le passage central : on passe par les côtés ;
+      // les spawns sN/sS sortent uniquement par les passages cNW/cNE/cSW/cSE)
+      [sWN, sEN], [sWN, busW], [busW, carW], [carW, sWS],
+      [sEN, carE], [carE, busE], [busE, sES], [sWS, sES],
       // zones de spawn et passages des clôtures
       [sN, cNW], [sN, cNE], [sS, cSE], [sS, cSW],
       [cNW, aWN], [cNW, sWN], [cNE, sEN], [cNE, aEN],
       [cSE, sES], [cSE, aES], [cSW, aWS], [cSW, sWS],
-      // allées latérales (détour dW/dE autour des caisses)
-      [aWN, sWN], [aWN, dW], [dW, aW], [aW, aWS], [aWS, sWS],
-      [aEN, sEN], [aEN, aE], [aE, dE], [dE, aES], [aES, sES],
-      // maison A : portes, RDC, escalier, étage
+      // allées latérales
+      [aWN, sWN], [aW, aWS], [aWS, sWS],
+      [aEN, sEN], [aEN, aE], [aES, sES],
+      // maison A : porte avant, RDC, escalier, étage
+      // (hAback sert aussi de détour d'allée autour des caisses ; la porte
+      // arrière est barricadée par les caisses : pas de lien hAback→hAin)
       [aWN, hAback], [hAback, aW], [hAdoor, sWN], [hAdoor, busW],
-      [hAdoor, hAin], [hAback, hAin], [hAin, hAsb], [hAsb, hAst], [hAst, hAup],
+      [hAdoor, hAin], [hAin, hAsb], [hAsb, hAst], [hAst, hAup],
       [hAup, hAupC], [hAup, hAw2], [hAupC, hAw1], [hAw1, hAw2],
       // maison B
       [aES, hBback], [hBback, aE], [hBdoor, sES], [hBdoor, busE],
-      [hBdoor, hBin], [hBback, hBin], [hBin, hBsb], [hBsb, hBst], [hBst, hBup],
+      [hBdoor, hBin], [hBin, hBsb], [hBsb, hBst], [hBst, hBup],
       [hBup, hBupC], [hBup, hBw2], [hBupC, hBw1], [hBw1, hBw2],
     ].forEach(([a, b]) => L(a, b));
 

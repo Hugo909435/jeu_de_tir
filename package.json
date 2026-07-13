@@ -1,0 +1,27 @@
+{
+  "name": "bloc-ops",
+  "version": "1.0.0",
+  "description": "Bloc Ops — FPS web minimaliste : solo contre bots ou multijoueur en ligne (parties privées à code).",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hugo909435/jeu_de_tir.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Hugo909435/jeu_de_tir/issues"
+  },
+  "homepage": "https://github.com/Hugo909435/jeu_de_tir#readme",
+  "dependencies": {
+    "ws": "^8.21.0"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^25.3.0"
+  }
+}

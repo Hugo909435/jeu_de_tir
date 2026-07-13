@@ -4,8 +4,9 @@ const Input = {
   move: { x: 0, y: 0 },        // -1..1 : x = droite, y = avant
   lookDX: 0, lookDY: 0,        // pixels souris accumulés (consommés par game.js)
   lookStick: { x: 0, y: 0 },   // joystick droit mobile (-1..1)
-  fire: false, ads: false, sprint: false,
-  jumpQueued: false, reloadQueued: false,
+  fire: false, ads: false, sprint: false, crouch: false,
+  jumpQueued: false, reloadQueued: false, nadeQueued: false,
+  scoreHeld: false,            // Tab maintenu = tableau des scores
   weaponQueued: null,          // 'ar' | 'sniper' | 'toggle' (consommé par game.js)
   locked: false,
   onLockChange: null,
@@ -20,18 +21,25 @@ const Input = {
   function updMove() {
     Input.move.x = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0);
     Input.move.y = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0);
-    Input.sprint = !!(keys.ShiftLeft || keys.ShiftRight);
+    Input.crouch = !!(keys.ShiftLeft || keys.ShiftRight);
+    Input.sprint = !!keys.CapsLock;
   }
   addEventListener('keydown', e => {
     if (e.repeat) return;
     keys[e.code] = true;
     if (e.code === 'Space') { Input.jumpQueued = true; e.preventDefault(); }
     if (e.code === 'KeyR') Input.reloadQueued = true;
+    if (e.code === 'KeyG') Input.nadeQueued = true;
+    if (e.code === 'Tab') { Input.scoreHeld = true; e.preventDefault(); }
     if (e.code === 'Digit1') Input.weaponQueued = 'ar';
     if (e.code === 'Digit2') Input.weaponQueued = 'sniper';
     updMove();
   });
-  addEventListener('keyup', e => { keys[e.code] = false; updMove(); });
+  addEventListener('keyup', e => {
+    keys[e.code] = false;
+    if (e.code === 'Tab') Input.scoreHeld = false;
+    updMove();
+  });
 
   /* ---------- Souris ---------- */
   addEventListener('mousemove', e => {
@@ -52,7 +60,15 @@ const Input = {
     Input.locked = document.pointerLockElement !== null;
     if (Input.onLockChange) Input.onLockChange(Input.locked);
   });
-  Input.requestLock = el => { if (el.requestPointerLock) el.requestPointerLock(); };
+  Input.requestLock = el => {
+    if (!el.requestPointerLock) return;
+    // hors geste utilisateur (ex. : début de partie en ligne déclenché par l'hôte),
+    // la demande peut être refusée — un clic sur le canvas la relancera
+    try {
+      const p = el.requestPointerLock();
+      if (p && p.catch) p.catch(() => {});
+    } catch { /* refusé : sans gravité */ }
+  };
 
   /* ---------- Tactile ---------- */
   function joystick(sel, cb) {
@@ -106,6 +122,7 @@ const Input = {
     hold('#btn-fire', on => { Input.fire = on; });
     tap('#btn-jump', () => { Input.jumpQueued = true; });
     tap('#btn-reload', () => { Input.reloadQueued = true; });
+    tap('#btn-nade', () => { Input.nadeQueued = true; });
     tap('#btn-weapon', () => { Input.weaponQueued = 'toggle'; });
     const adsBtn = document.querySelector('#btn-ads');
     adsBtn.addEventListener('touchstart', e => {

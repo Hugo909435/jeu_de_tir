@@ -83,6 +83,18 @@ const Sfx = (() => {
     headshot() { if (ensure()) { tone(0.35, 0.07, 1500, 1300, 'square'); tone(0.3, 0.09, 1900, 1700, 'square', 0.05); } },
     kill() { if (ensure()) { tone(0.3, 0.08, 600, 600, 'triangle'); tone(0.35, 0.12, 900, 1200, 'triangle', 0.08); } },
     damage() { if (ensure()) noise(0.35, 0.12, 350, 1); },
+    pin() { if (ensure()) tone(0.2, 0.05, 900, 650, 'square'); }, // dégoupillage / lancer
+    // vol ∈ 0..1 : atténuation selon la distance de l'explosion
+    explosion(vol = 1) {
+      if (!ensure() || vol <= 0.02) return;
+      noise(1.1 * vol, 0.45, 450, 1);
+      noise(0.7 * vol, 0.9, 140, 1);                 // grondement long
+      tone(0.5 * vol, 0.4, 110, 28, 'sawtooth');
+    },
+    streak() {
+      if (!ensure()) return;
+      [660, 880, 1175].forEach((f, i) => tone(0.28, 0.12, f, f, 'triangle', i * 0.09));
+    },
     death() { if (ensure()) { tone(0.4, 0.5, 300, 70, 'sawtooth'); noise(0.3, 0.4, 500, 1); } },
     win() {
       if (!ensure()) return;

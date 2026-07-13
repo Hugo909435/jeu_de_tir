@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Bloc Ops — Rue Atomique</title>
+<link rel="icon" href="data:,">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -31,9 +32,21 @@
     <span id="sensVal">×1.00</span>
     <button id="btn-sound">🔊 Son activé</button>
   </div>
-  <button id="btn-start">JOUER</button>
-  <p class="help">PC : ZQSD/WASD bouger · Souris viser · Clic tirer · Clic droit viser (ADS) · R recharger · 1/2 ou molette changer d'arme · Espace sauter · Maj sprinter · M couper le son<br>
-  Mobile : joystick gauche bouger (à fond = sprint) · joystick droit viser · boutons TIR / SAUT / R / ADS / ARME</p>
+  <div class="modes">
+    <button id="btn-start">🤖 SOLO — contre les bots</button>
+    <div class="mp">
+      <input id="pname" maxlength="14" placeholder="Ton pseudo" autocomplete="off">
+      <button id="btn-create">🌐 Créer une partie privée</button>
+      <div class="joinrow">
+        <input id="jcode" maxlength="4" placeholder="CODE" autocomplete="off">
+        <button id="btn-join">Rejoindre</button>
+      </div>
+    </div>
+    <p id="mpMsg" class="mpmsg"></p>
+  </div>
+  <p class="help">PC : ZQSD/WASD bouger · Souris viser · Clic tirer · Clic droit viser (ADS) · R recharger · 1/2 ou molette changer d'arme · G grenade · Espace sauter · Maj se baisser · Verr Maj sprinter · Tab tableau des scores · M couper le son<br>
+  Mobile : joystick gauche bouger (à fond = sprint) · joystick droit viser · boutons TIR / SAUT / R / ADS / ARME / 🧨 · tap sur le score = tableau<br>
+  Killstreaks : 3 éliminations = UAV (radar) · 5 = RUSH (vitesse + rechargement)</p>
 </div>
 
 <!-- ===== HUD ===== -->
@@ -49,8 +62,18 @@
   <div id="hitmarker">✕</div>
   <div id="dmgdir"><div class="wedge"></div></div>
   <div id="kd">☠ <b id="kdNum">0 / 0</b></div>
+  <canvas id="radar" width="148" height="148"></canvas>
+  <div id="streakMsg"></div>
+  <div id="killMsg"></div>
+  <div id="scoreboard" class="hidden">
+    <h3>Tableau des scores</h3>
+    <div class="cols">
+      <table id="sbBlue"></table>
+      <table id="sbRed"></table>
+    </div>
+  </div>
   <div id="hpwrap"><div id="hpbar"></div><span id="hpnum">200</span></div>
-  <div id="ammo"><div id="weaponName">Fusil d'assaut</div><b id="ammoNum">25</b><span> / ∞</span><div id="reloadTxt">RECHARGEMENT…</div><div id="reloadWrap"><div id="reloadBar"></div></div></div>
+  <div id="ammo"><div id="weaponName">Fusil d'assaut</div><b id="ammoNum">25</b><span> / ∞</span><div id="reloadTxt">RECHARGEMENT…</div><div id="reloadWrap"><div id="reloadBar"></div></div><div id="nades">🧨 ×2</div></div>
   <div id="protection">🛡 Protection de spawn</div>
   <div id="damageFlash"></div>
   <div id="scope"><div class="hline"></div><div class="vline"></div></div>
@@ -65,13 +88,29 @@
   <button id="btn-ads">ADS</button>
   <button id="btn-jump">SAUT</button>
   <button id="btn-reload">R</button>
+  <button id="btn-nade">🧨</button>
   <button id="btn-weapon">AR</button>
+</div>
+
+<!-- ===== LOBBY (partie privée en ligne) ===== -->
+<div id="lobby" class="overlay hidden">
+  <h2>Partie privée</h2>
+  <div class="codebox">Code du salon<b id="roomCode">····</b></div>
+  <p class="sub">Tes amis se connectent au même serveur et entrent ce code.</p>
+  <div class="lobbycols">
+    <div><h3 class="tblue">Bleus</h3><ul id="lobbyBlue"></ul></div>
+    <div><h3 class="tred">Rouges</h3><ul id="lobbyRed"></ul></div>
+  </div>
+  <button id="btn-launch" class="hidden">LANCER LA PARTIE</button>
+  <p id="lobbyWait" class="sub">En attente du lancement par l'hôte…</p>
+  <button id="btn-leave">← Quitter le salon</button>
 </div>
 
 <!-- ===== PAUSE / REPRISE (PC) ===== -->
 <div id="resume" class="overlay hidden">
   <h2>Jeu en pause</h2>
   <button id="btn-resume">Cliquer pour reprendre</button>
+  <button id="btn-quit">Quitter la partie</button>
 </div>
 
 <!-- ===== FIN DE PARTIE ===== -->
@@ -83,6 +122,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="js/map.js"></script>
+<script src="js/net.js"></script>
 <script src="js/controls.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/effects.js"></script>

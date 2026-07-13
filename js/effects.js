@@ -72,26 +72,34 @@ const Effects = (() => {
     m.visible = true;
   }
 
-  function muzzle(pos) {
+  function muzzle(pos, scale, life) {
     const f = next(flashes);
-    f.life = 0.045;
+    f.life = life || 0.045;
     f.mesh.position.copy(pos);
     f.mesh.rotation.set(Math.random() * 3, Math.random() * 3, 0);
-    f.mesh.scale.setScalar(0.8 + Math.random() * 0.6);
+    f.mesh.scale.setScalar(scale || 0.8 + Math.random() * 0.6);
     f.mesh.visible = true;
   }
 
   // color : 0xffd257 étincelles (décor) · 0xc0392b sang (personnage touché)
-  function impact(pos, color) {
+  function impact(pos, color, speed = 5) {
     const b = next(bursts);
     b.life = 0.35;
     b.mat.color.setHex(color);
     b.mat.opacity = 1;
     for (const p of b.parts) {
       p.mesh.position.copy(pos);
-      p.vel.set(Math.random() - 0.5, Math.random() * 0.9, Math.random() - 0.5).multiplyScalar(5);
+      p.vel.set(Math.random() - 0.5, Math.random() * 0.9, Math.random() - 0.5).multiplyScalar(speed);
       p.mesh.visible = true;
     }
+  }
+
+  // Explosion de grenade : boule de feu (flashs agrandis) + double gerbe rapide
+  function explosion(pos) {
+    muzzle(pos, 7, 0.13);
+    muzzle(pos, 4, 0.2);
+    impact(pos, 0xff8c3a, 11);
+    impact(pos, 0xffd257, 8);
   }
 
   function update(dt) {
@@ -118,5 +126,5 @@ const Effects = (() => {
     }
   }
 
-  return { init, tracer, muzzle, impact, update };
+  return { init, tracer, muzzle, impact, explosion, update };
 })();
