@@ -55,7 +55,8 @@ const Net = (() => {
     shoot(from, to, weapon) {
       send({ t: 'shoot', f: [+from.x.toFixed(2), +from.y.toFixed(2), +from.z.toFixed(2)], e: [+to.x.toFixed(2), +to.y.toFixed(2), +to.z.toFixed(2)], w: weapon });
     },
-    hit(targetId, head, weapon) { send({ t: 'hit', target: targetId, head, w: weapon }); },
+    // nb/nh : nombre de plombs corps/tête (fusil à pompe) — 1 balle sinon
+    hit(targetId, head, weapon, nb = 1, nh = 0) { send({ t: 'hit', target: targetId, head, w: weapon, nb, nh }); },
     nade(pos, vel) { send({ t: 'nade', p: [pos.x, pos.y, pos.z], v: [vel.x, vel.y, vel.z] }); },
     boom(pos) { send({ t: 'boom', p: [pos.x, pos.y, pos.z] }); },
     nadeHit(targetId, dmg) { send({ t: 'nadeHit', target: targetId, dmg: Math.round(dmg) }); },

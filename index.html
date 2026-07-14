@@ -14,18 +14,8 @@
 <div id="menu" class="overlay">
   <h1>BLOC OPS</h1>
   <p class="sub">Rue Atomique — Match à mort par équipe · Premier à 20</p>
-  <div class="weapons">
-    <button class="wcard selected" data-weapon="ar">
-      <span class="wname">Fusil d'assaut</span>
-      <span class="wstat">20 dégâts (40 tête)</span>
-      <span class="wstat">25 balles · automatique</span>
-    </button>
-    <button class="wcard" data-weapon="sniper">
-      <span class="wname">Sniper</span>
-      <span class="wstat">100 dégâts (200 tête)</span>
-      <span class="wstat">5 balles · lent mais létal</span>
-    </button>
-  </div>
+  <div class="weapons" id="menuWeapons"></div>
+  <p class="sub small">🔫 Secondaire pour tous : <b>Deagle</b> — 70 dégâts (140 tête) · 7 balles · coup par coup (touche 2)</p>
   <div class="opts">
     <label for="sens">Sensibilité visée</label>
     <input type="range" id="sens" min="0.3" max="2" step="0.05" value="1">
@@ -44,8 +34,8 @@
     </div>
     <p id="mpMsg" class="mpmsg"></p>
   </div>
-  <p class="help">PC : ZQSD/WASD bouger · Souris viser · Clic tirer · Clic droit viser (ADS) · R recharger · 1/2 ou molette changer d'arme · G grenade · Espace sauter · Maj se baisser · Verr Maj sprinter · Tab tableau des scores · M couper le son<br>
-  Mobile : joystick gauche bouger (à fond = sprint) · joystick droit viser · boutons TIR / SAUT / R / ADS / ARME / 🧨 · tap sur le score = tableau<br>
+  <p class="help">PC : ZQSD/WASD bouger · Souris viser · Clic tirer · Clic droit viser (ADS) · R recharger · 1 principale / 2 Deagle (ou molette) · B équipement · G grenade · Espace sauter · Maj se baisser · Verr Maj sprinter · Tab tableau des scores · M couper le son<br>
+  Mobile : joystick gauche bouger (à fond = sprint) · joystick droit viser · boutons TIR / SAUT / R / ADS / ARME / 🧨 / 🎒 · tap sur le score = tableau<br>
   Killstreaks : 3 éliminations = UAV (radar) · 5 = RUSH (vitesse + rechargement)</p>
 </div>
 
@@ -90,6 +80,17 @@
   <button id="btn-reload">R</button>
   <button id="btn-nade">🧨</button>
   <button id="btn-weapon">AR</button>
+  <button id="btn-loadout">🎒</button>
+</div>
+
+<!-- ===== ÉQUIPEMENT EN JEU (touche B / bouton 🎒) ===== -->
+<div id="loadout" class="overlay hidden">
+  <h2>🎒 Équipement</h2>
+  <p class="sub">Choisis ton arme principale — appliquée à ta prochaine réapparition.<br>
+  Secondaire : <b>Deagle</b> (touche 2, molette ou bouton ARME pour basculer)</p>
+  <div class="weapons" id="loadoutWeapons"></div>
+  <p id="loadoutMsg" class="mpmsg"></p>
+  <button id="btn-loadout-close">✔ REPRENDRE (B)</button>
 </div>
 
 <!-- ===== LOBBY (partie privée en ligne) ===== -->

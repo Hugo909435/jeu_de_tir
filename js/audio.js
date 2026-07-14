@@ -64,15 +64,33 @@ const Sfx = (() => {
       if (master) master.gain.value = muted ? 0 : 0.5;
       return muted;
     },
-    // vol ∈ 0..1 : atténuation selon la distance pour les tirs des bots
+    // vol ∈ 0..1 : atténuation selon la distance pour les tirs des bots.
+    // Chaque famille d'arme a sa signature (grave = lourd, aigu = léger).
     shot(weapon, vol = 1) {
       if (!ensure() || vol <= 0.02) return;
       if (weapon === 'sniper') {
         noise(0.9 * vol, 0.28, 900, 1);
         noise(0.5 * vol, 0.5, 220, 1);          // grondement
         tone(0.25 * vol, 0.12, 180, 40, 'triangle');
+      } else if (weapon === 'shotgun') {
+        noise(1.0 * vol, 0.2, 750, 1);          // grosse détonation
+        noise(0.6 * vol, 0.42, 190, 1);
+        tone(0.3 * vol, 0.12, 150, 40, 'triangle');
+      } else if (weapon === 'deagle') {
+        noise(0.85 * vol, 0.13, 1050, 1);       // claquement sec et fort
+        noise(0.4 * vol, 0.3, 260, 1);
+        tone(0.22 * vol, 0.09, 240, 60, 'triangle');
+      } else if (weapon === 'dmr') {
+        noise(0.8 * vol, 0.11, 1300, 1);        // coup par coup qui punch
+        tone(0.2 * vol, 0.07, 300, 80, 'triangle');
+      } else if (weapon === 'lmg') {
+        noise(0.75 * vol, 0.1, 1150, 1);        // martèlement plus grave que l'AR
+        tone(0.2 * vol, 0.06, 250, 70, 'triangle');
+      } else if (weapon === 'smg') {
+        noise(0.55 * vol, 0.07, 2100, 1);       // tac-tac léger et rapide
+        tone(0.15 * vol, 0.04, 380, 110, 'triangle');
       } else {
-        noise(0.7 * vol, 0.09, 1600, 1);
+        noise(0.7 * vol, 0.09, 1600, 1);        // fusil d'assaut
         tone(0.18 * vol, 0.05, 320, 90, 'triangle');
       }
     },

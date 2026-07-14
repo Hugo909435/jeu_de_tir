@@ -13,16 +13,20 @@ html, body { width:100%; height:100%; overflow:hidden; background:#000; touch-ac
 .overlay .sub { opacity:.85; font-size:clamp(13px,3vw,17px); }
 .overlay .help { opacity:.6; font-size:12px; line-height:1.7; max-width:560px; }
 .overlay button { cursor:pointer; border:none; border-radius:12px; font-weight:800; color:#fff; }
-#btn-start, #btn-replay, #btn-resume { font-size:22px; padding:14px 52px;
+#btn-start, #btn-replay, #btn-resume, #btn-loadout-close { font-size:22px; padding:14px 52px;
   background:#2e6df6; box-shadow:0 5px 0 #1c4bb8; letter-spacing:2px; }
-#btn-start:active, #btn-replay:active, #btn-resume:active { transform:translateY(3px); box-shadow:0 2px 0 #1c4bb8; }
+#btn-start:active, #btn-replay:active, #btn-resume:active, #btn-loadout-close:active { transform:translateY(3px); box-shadow:0 2px 0 #1c4bb8; }
 
-.weapons { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
-.wcard { display:flex; flex-direction:column; gap:6px; padding:16px 22px; min-width:210px;
-  background:#1b2740; border:3px solid transparent; border-radius:14px; }
+/* 6 armes principales : cartes compactes sur 2-3 rangées */
+.weapons { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; max-width:660px; }
+.wcard { display:flex; flex-direction:column; gap:4px; padding:12px 14px; min-width:170px;
+  flex:0 1 200px; background:#1b2740; border:3px solid transparent; border-radius:14px; }
 .wcard.selected { border-color:#2e6df6; background:#213458; }
-.wcard .wname { font-size:19px; font-weight:800; }
-.wcard .wstat { font-size:13px; opacity:.75; }
+.wcard .wname { font-size:16px; font-weight:800; }
+.wcard .wstat { font-size:11.5px; opacity:.75; }
+.sub.small { font-size:12.5px; opacity:.65; }
+/* le menu principal et l'équipement peuvent dépasser un petit écran → défilables */
+#menu, #loadout { justify-content:flex-start; overflow-y:auto; padding-top:4vh; }
 
 /* ===== Choix du mode (solo / multijoueur) ===== */
 .modes { display:flex; flex-direction:column; gap:12px; align-items:center; }
@@ -207,3 +211,5 @@ html, body { width:100%; height:100%; overflow:hidden; background:#000; touch-ac
   width:52px; height:52px; font-size:18px; }
 #btn-weapon { right:calc(46px + env(safe-area-inset-right)); bottom:calc(80px + env(safe-area-inset-bottom));
   width:58px; height:58px; font-size:11px; }
+#btn-loadout { left:calc(160px + env(safe-area-inset-left)); bottom:calc(200px + env(safe-area-inset-bottom));
+  width:52px; height:52px; font-size:18px; }

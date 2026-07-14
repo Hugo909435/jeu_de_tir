@@ -179,6 +179,46 @@ Nuketown** (design protégé par le droit d'auteur, on garde une version origina
   voient, kill AR validé serveur + scores synchro, respawn, dégâts de
   grenade croisés, 0 erreur console, et non-régression du solo (7 bots).
 
+## ✅ Fait (session du 2026-07-14) — ARSENAL & ÉQUIPEMENT
+
+- **5 nouvelles armes style Call of** (table `WEAPONS` de `game.js`, mêmes clés
+  côté serveur) : **Mitraillette** (14 dégâts, 32 balles, cadence 0,068 s,
+  +6 % vitesse, faible de loin), **Fusil à pompe** (8 plombs × 26 dégâts,
+  gerbe fixe, dégâts pleins ≤ 9 m puis dégressifs → nuls au-delà de 24 m,
+  tête ×1,5), **Fusil coup par coup / DMR** (55 dégâts, semi-auto 0,33 s,
+  très précis, 2 têtes = kill), **Mitrailleuse** (24 dégâts, 60 balles,
+  −12 % vitesse, rechargement 3,5 s, grosse dispersion à la hanche) et
+  **Deagle** en **arme secondaire pour tous** (70 dégâts / 140 tête, 7 balles,
+  0,42 s entre les tirs, +5 % vitesse). Équilibrage : TTK corps ~0,9-1 s pour
+  toutes les principales (200 PV), chacune avec force/faiblesse (portée,
+  mobilité, chargeur, précision). Nouveaux champs par arme : `short`, `speed`
+  (multiplicateur de vitesse), `heatPerShot` (chauffe SMG/LMG), `tip` (bout de
+  canon des modèles personnages), `desc` (cartes du menu), et pour le pompe
+  `pellets/pspread/headMul/rangeFull/rangeMax/dmgMin`.
+- **Principale + secondaire** : touche **1** = principale, **2** = Deagle,
+  molette / bouton ARME = bascule. `ammoStore` conserve le chargeur de chaque
+  arme, tout repart plein au respawn.
+- **Menu d'équipement en jeu** (touche **B** sur PC, bouton **🎒** sur mobile) :
+  cartes générées depuis `WEAPONS` (menu principal ET overlay en jeu), choix
+  mémorisé (localStorage) et **appliqué à la prochaine réapparition** (style
+  Call of). Libère/reprend le pointer lock proprement (pas d'écran pause).
+- **Modèles 3D distincts** pour les 5 nouvelles armes (vue première personne
+  ET dans les mains des personnages, traçantes au vrai bout du canon), sons de
+  tir différenciés (SMG léger, LMG grave, pompe détonation, deagle claquement,
+  DMR punch), tir à plombs multi-raycast avec dégâts cumulés par cible.
+- **Bots variés** : bleus SMG/sniper/LMG, rouges AR/DMR/pompe/SMG ; le pompe
+  des bots ne tire qu'à ≤ 16 m (dégâts forfaitaires 90), dégâts/cadence par
+  arme (`botDmg`/`botInterval`/`botMaxD`).
+- **Serveur autoritaire à jour** : table des 7 armes, revendication de touche
+  étendue aux plombs (`nb`/`nh` corps/tête, plafonnés à 8), même formule de
+  dégâts dégressifs que le client, portée max du pompe vérifiée (28 m), tête
+  ×1,5 pompe / ×2 sinon. Compatible messages à l'ancienne (`head` seul).
+- Testé headless (Puppeteer + Edge) : 6 cartes au menu, bascule 1↔2 (Deagle
+  tire, chargeurs séparés), menu B ouvre/ferme, pompe équipé au respawn
+  (6 cartouches, 1 tir = 8 plombs visibles au mur), 20 s de combat bots
+  toutes armes (score 5-3), 0 erreur console. Multi : pompe refusé à 50 m,
+  3 deagle validés serveur = kill + score, 0 erreur.
+
 ## 🔲 Reste à faire (par priorité)
 
 1. **Test manuel réel** : solo en ouvrant `index.html` (double-clic suffit) ;

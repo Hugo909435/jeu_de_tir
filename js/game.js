@@ -26,10 +26,58 @@
     nadeDmg: 170,         // dégâts au centre de l'explosion
     nadeSpeed: 17,        // m/s : vitesse initiale du lancer
   };
+  /* Armes — équilibrage : toutes les principales tuent en ~0,9-1 s si tous les
+     tirs touchent (200 PV), chacune avec sa force et sa faiblesse.
+     kick = recul vertical (rad/tir) ; le spread grandit avec la chauffe en auto ;
+     speed = multiplicateur de vitesse de déplacement ; tip = bout du canon du
+     modèle (traçantes des personnages) ; desc = lignes des cartes du menu.
+     Fusil à pompe : pellets plombs par cartouche, dégâts pleins jusqu'à
+     rangeFull m puis décroissance vers dmgMin à rangeMax (0 au-delà). */
   const WEAPONS = {
-    // kick = recul vertical (rad/tir) ; le spread grandit avec la chauffe en auto
-    sniper: { label: 'Sniper', dmg: 100, mag: 5, reloadT: 2.5, interval: 1.4, auto: false, adsFov: 18, spreadHip: 0.02, spreadAds: 0.0006, kick: 0.05, botInterval: 1.6, muzzle: [0.28, -0.23, -1.5] },
-    ar: { label: "Fusil d'assaut", dmg: 20, mag: 25, reloadT: 1.8, interval: 0.1, auto: true, adsFov: 50, spreadHip: 0.016, spreadAds: 0.005, kick: 0.0085, botInterval: 0.22, muzzle: [0.28, -0.24, -1.2] },
+    ar: {
+      label: "Fusil d'assaut", short: 'AR', dmg: 20, mag: 25, reloadT: 1.8, interval: 0.1,
+      auto: true, adsFov: 50, spreadHip: 0.016, spreadAds: 0.005, kick: 0.0085, speed: 1,
+      botInterval: 0.22, muzzle: [0.28, -0.24, -1.2], tip: -0.66,
+      desc: ['20 dégâts (40 tête) · 25 balles', 'automatique · le bon partout'],
+    },
+    smg: {
+      label: 'Mitraillette', short: 'SMG', dmg: 14, mag: 32, reloadT: 1.4, interval: 0.068,
+      auto: true, adsFov: 55, spreadHip: 0.011, spreadAds: 0.008, kick: 0.006, speed: 1.06,
+      heatPerShot: 0.9, botInterval: 0.16, muzzle: [0.28, -0.24, -1.08], tip: -0.53,
+      desc: ['14 dégâts (28 tête) · 32 balles', 'cadence folle · +6 % vitesse · faible de loin'],
+    },
+    shotgun: {
+      label: 'Fusil à pompe', short: 'POMPE', dmg: 26, mag: 6, reloadT: 2.8, interval: 0.8,
+      auto: false, adsFov: 60, spreadHip: 0.012, spreadAds: 0.008, kick: 0.055, speed: 1,
+      pellets: 8, pspread: 0.045, headMul: 1.5, rangeFull: 9, rangeMax: 24, dmgMin: 0.25,
+      botInterval: 1.1, botDmg: 90, botMaxD: 16, muzzle: [0.28, -0.23, -1.28], tip: -0.73,
+      desc: ['8 plombs × 26 dégâts · 6 cartouches', 'dévastateur à bout portant · nul de loin'],
+    },
+    dmr: {
+      label: 'Fusil coup par coup', short: 'DMR', dmg: 55, mag: 12, reloadT: 2.1, interval: 0.33,
+      auto: false, adsFov: 38, spreadHip: 0.02, spreadAds: 0.001, kick: 0.02, speed: 1,
+      botInterval: 0.6, muzzle: [0.28, -0.24, -1.32], tip: -0.77,
+      desc: ['55 dégâts (110 tête) · 12 balles', 'coup par coup précis · 2 têtes = kill'],
+    },
+    lmg: {
+      label: 'Mitrailleuse', short: 'LMG', dmg: 24, mag: 60, reloadT: 3.5, interval: 0.12,
+      auto: true, adsFov: 55, spreadHip: 0.03, spreadAds: 0.009, kick: 0.012, speed: 0.88,
+      heatPerShot: 1.25, botInterval: 0.26, muzzle: [0.28, -0.25, -1.37], tip: -0.82,
+      desc: ['24 dégâts (48 tête) · 60 balles', 'énorme chargeur · lourde : −12 % vitesse'],
+    },
+    sniper: {
+      label: 'Sniper', short: 'SNIP', dmg: 100, mag: 5, reloadT: 2.5, interval: 1.4,
+      auto: false, adsFov: 18, spreadHip: 0.02, spreadAds: 0.0006, kick: 0.05, speed: 0.95,
+      botInterval: 1.6, muzzle: [0.28, -0.23, -1.5], tip: -0.97,
+      desc: ['100 dégâts (200 tête) · 5 balles', 'lunette · 1 balle en tête = kill'],
+    },
+    // Arme secondaire (tout le monde l'a en touche 2) : gros dégâts, tir lent
+    deagle: {
+      label: 'Deagle', short: 'DGL', dmg: 70, mag: 7, reloadT: 1.5, interval: 0.42,
+      auto: false, adsFov: 60, spreadHip: 0.025, spreadAds: 0.004, kick: 0.045, speed: 1.05,
+      botInterval: 0.7, muzzle: [0.28, -0.235, -0.83], tip: -0.28,
+      desc: ['70 dégâts (140 tête) · 7 balles', 'coup par coup lent mais brutal'],
+    },
   };
   const TEAM = {
     blue: { color: 0x2e6df6, name: 'Bleus' },
@@ -128,10 +176,99 @@
     return g;
   }
 
+  // Mitraillette compacte : canon court à silencieux, long chargeur, crosse repliée.
+  function buildSMG() {
+    const g = new THREE.Group();
+    gunPart(g, gbox(0.085, 0.1, 0.3), GUNMAT.metal, 0, 0, -0.02);                  // carcasse
+    gunPart(g, gbox(0.07, 0.075, 0.16), GUNMAT.polymer, 0, 0, -0.26);              // garde-main court
+    gunPart(g, gcyl(0.016, 0.18), GUNMAT.black, 0, 0.01, -0.42, Math.PI / 2);      // canon
+    gunPart(g, gcyl(0.026, 0.1, 12), GUNMAT.black, 0, 0.01, -0.48, Math.PI / 2);   // silencieux
+    gunPart(g, gbox(0.03, 0.016, 0.3), GUNMAT.black, 0, 0.06, -0.1);               // rail
+    gunPart(g, gbox(0.016, 0.04, 0.016), GUNMAT.black, 0, 0.085, -0.3);            // guidon
+    gunPart(g, gbox(0.05, 0.22, 0.07), GUNMAT.metal, 0, -0.16, -0.1, 0.08);        // chargeur long
+    gunPart(g, gbox(0.05, 0.11, 0.07), GUNMAT.polymer, 0, -0.11, 0.1, -0.2);       // poignée
+    gunPart(g, gbox(0.028, 0.05, 0.2), GUNMAT.metal, 0.045, 0.01, 0.22);           // crosse repliée (tube)
+    gunPart(g, gbox(0.05, 0.09, 0.03), GUNMAT.polymer, 0.045, 0, 0.32);            // plaque de crosse
+    gunPart(g, gbox(0.05, 0.05, 0.06), GUNMAT.accent, 0, 0.005, 0.12);             // culasse accent
+    return g;
+  }
+
+  // Fusil à pompe : gros canon + tube magasin dessous, pompe et crosse en bois.
+  function buildShotgun() {
+    const g = new THREE.Group();
+    gunPart(g, gbox(0.09, 0.11, 0.26), GUNMAT.metal, 0, 0, 0.02);                  // carcasse
+    gunPart(g, gcyl(0.024, 0.62), GUNMAT.black, 0, 0.035, -0.42, Math.PI / 2);     // canon
+    gunPart(g, gcyl(0.018, 0.5), GUNMAT.metal, 0, -0.02, -0.36, Math.PI / 2);      // tube magasin
+    gunPart(g, gbox(0.075, 0.06, 0.2), GUNMAT.wood, 0, -0.02, -0.3);               // pompe
+    gunPart(g, gbox(0.02, 0.03, 0.02), GUNMAT.accent, 0, 0.075, -0.7);             // guidon (perle)
+    gunPart(g, gbox(0.08, 0.1, 0.28), GUNMAT.wood, 0, -0.035, 0.26);               // crosse
+    gunPart(g, gbox(0.05, 0.12, 0.09), GUNMAT.woodDark, 0, -0.12, 0.13, -0.3);     // poignée
+    gunPart(g, gbox(0.085, 0.12, 0.03), GUNMAT.black, 0, -0.04, 0.41);             // butée d'épaule
+    gunPart(g, gbox(0.06, 0.03, 0.1), GUNMAT.accent, 0, -0.065, 0.02);             // porte-cartouches
+    return g;
+  }
+
+  // Fusil coup par coup (DMR) : canon long, viseur tubulaire court, chargeur droit.
+  function buildDMR() {
+    const g = new THREE.Group();
+    gunPart(g, gbox(0.09, 0.105, 0.34), GUNMAT.metal, 0, 0, 0);                    // carcasse
+    gunPart(g, gbox(0.075, 0.08, 0.3), GUNMAT.polymer, 0, 0.005, -0.3);            // garde-main
+    gunPart(g, gbox(0.082, 0.02, 0.3), GUNMAT.accent, 0, -0.045, -0.3);            // liseré accent
+    gunPart(g, gcyl(0.017, 0.34), GUNMAT.black, 0, 0.02, -0.6, Math.PI / 2);       // canon long
+    gunPart(g, gbox(0.045, 0.045, 0.06), GUNMAT.metal, 0, 0.02, -0.74);            // frein de bouche
+    gunPart(g, gbox(0.03, 0.016, 0.55), GUNMAT.black, 0, 0.065, -0.15);            // rail
+    gunPart(g, gcyl(0.026, 0.14, 12), GUNMAT.black, 0, 0.11, 0, Math.PI / 2);      // viseur tubulaire
+    gunPart(g, gcyl(0.032, 0.005, 12), GUNMAT.glass, 0, 0.11, -0.072, Math.PI / 2);// verre
+    gunPart(g, gbox(0.05, 0.16, 0.08), GUNMAT.metal, 0, -0.13, -0.02, 0.1);        // chargeur
+    gunPart(g, gbox(0.05, 0.13, 0.075), GUNMAT.polymer, 0, -0.125, 0.14, -0.25);   // poignée
+    gunPart(g, gbox(0.06, 0.08, 0.26), GUNMAT.polymer, 0, -0.005, 0.32);           // crosse
+    gunPart(g, gbox(0.07, 0.12, 0.035), GUNMAT.black, 0, -0.02, 0.44);             // butée d'épaule
+    return g;
+  }
+
+  // Mitrailleuse : canon épais sous cache, grosse boîte à munitions, bipied replié.
+  function buildLMG() {
+    const g = new THREE.Group();
+    gunPart(g, gbox(0.1, 0.13, 0.4), GUNMAT.metal, 0, 0, 0.02);                    // carcasse massive
+    gunPart(g, gbox(0.09, 0.09, 0.34), GUNMAT.black, 0, 0.01, -0.36);              // cache-canon
+    gunPart(g, gcyl(0.02, 0.3), GUNMAT.black, 0, 0.01, -0.66, Math.PI / 2);        // canon
+    gunPart(g, gcyl(0.03, 0.07, 10), GUNMAT.metal, 0, 0.01, -0.79, Math.PI / 2);   // cache-flamme
+    gunPart(g, gbox(0.03, 0.016, 0.4), GUNMAT.black, 0, 0.075, -0.14);             // rail
+    gunPart(g, gbox(0.02, 0.05, 0.02), GUNMAT.black, 0, 0.1, -0.44);               // guidon
+    gunPart(g, gbox(0.12, 0.18, 0.16), GUNMAT.polymer, 0, -0.14, -0.02);           // boîte à munitions
+    gunPart(g, gbox(0.125, 0.04, 0.165), GUNMAT.accent, 0, -0.05, -0.02);          // couvercle accent
+    gunPart(g, gbox(0.016, 0.16, 0.016), GUNMAT.metal, -0.035, -0.1, -0.5, 0.35);  // bipied replié
+    gunPart(g, gbox(0.016, 0.16, 0.016), GUNMAT.metal, 0.035, -0.1, -0.5, 0.35);
+    gunPart(g, gbox(0.05, 0.13, 0.075), GUNMAT.polymer, 0, -0.13, 0.16, -0.25);    // poignée
+    gunPart(g, gbox(0.07, 0.09, 0.22), GUNMAT.polymer, 0, -0.005, 0.34);           // crosse
+    gunPart(g, gbox(0.08, 0.13, 0.035), GUNMAT.black, 0, -0.02, 0.46);             // butée d'épaule
+    return g;
+  }
+
+  // Deagle : gros pistolet — glissière large, guidon accent, poignée sombre.
+  function buildDeagle() {
+    const g = new THREE.Group();
+    gunPart(g, gbox(0.055, 0.07, 0.3), GUNMAT.metal, 0, 0.02, -0.08);              // glissière
+    gunPart(g, gbox(0.05, 0.05, 0.3), GUNMAT.black, 0, -0.03, -0.08);              // châssis
+    gunPart(g, gcyl(0.014, 0.06), GUNMAT.black, 0, 0.025, -0.25, Math.PI / 2);     // bouche
+    gunPart(g, gbox(0.016, 0.03, 0.016), GUNMAT.accent, 0, 0.065, -0.21);          // guidon
+    gunPart(g, gbox(0.04, 0.03, 0.03), GUNMAT.accent, 0, 0.065, 0.05);             // hausse
+    gunPart(g, gbox(0.05, 0.16, 0.09), GUNMAT.woodDark, 0, -0.12, 0.05, -0.35);    // poignée
+    gunPart(g, gbox(0.045, 0.05, 0.05), GUNMAT.metal, 0, -0.05, -0.02);            // pontet
+    return g;
+  }
+
   const gun = new THREE.Group();
-  const gunModels = { ar: buildAR(), sniper: buildSniper() };
-  gunModels.sniper.visible = false;
-  gun.add(gunModels.ar, gunModels.sniper);
+  const gunBuilders = {
+    ar: buildAR, smg: buildSMG, shotgun: buildShotgun, dmr: buildDMR,
+    lmg: buildLMG, sniper: buildSniper, deagle: buildDeagle,
+  };
+  const gunModels = {};
+  for (const k in gunBuilders) {
+    gunModels[k] = gunBuilders[k]();
+    gunModels[k].visible = k === 'ar';
+    gun.add(gunModels[k]);
+  }
   gun.position.set(0.28, -0.26, -0.55);
   camera.add(gun);
   let gunKick = 0;
@@ -193,14 +330,14 @@
     block(aim, 0.17, 0.17, 0.17, 0.15, -0.15, 0.5, SKIN, 'body');    // mains
     block(aim, 0.17, 0.17, 0.17, 0.06, -0.1, 0.62, SKIN, 'body');
     // La vraie arme (mêmes modèles qu'en vue première personne), retournée pour
-    // pointer vers +z ; le bout du canon sert aux traçantes. Les deux modèles
+    // pointer vers +z ; le bout du canon sert aux traçantes. Tous les modèles
     // sont montés pour pouvoir refléter un changement d'arme (joueurs en ligne).
     const guns = {};
-    for (const wName of ['ar', 'sniper']) {
-      const gm = wName === 'sniper' ? buildSniper() : buildAR();
+    for (const wName in WEAPONS) {
+      const gm = gunBuilders[wName]();
       gm.rotation.y = Math.PI;
       gm.position.set(0.13, -0.04, 0.38);
-      gm.userData.tip = new THREE.Vector3(0, 0.025, wName === 'sniper' ? -0.97 : -0.66);
+      gm.userData.tip = new THREE.Vector3(0, 0.025, WEAPONS[wName].tip);
       gm.visible = wName === weapon;
       aim.add(gm);
       guns[wName] = gm;
@@ -231,8 +368,7 @@
       group: g, parts, anim: { legL, legR, aim, head, gun: guns[weapon] },
       setWeapon(w) {
         if (!guns[w]) return;
-        guns.ar.visible = w === 'ar';
-        guns.sniper.visible = w === 'sniper';
+        for (const k in guns) guns[k].visible = k === w;
         res.anim.gun = guns[w];
       },
     };
@@ -266,13 +402,15 @@
     bots.push(b);
     return b;
   }
-  // Les bots ne sont construits qu'au premier lancement d'une partie solo
+  // Les bots ne sont construits qu'au premier lancement d'une partie solo.
+  // Chaque équipe mélange les styles d'armes (le joueur complète l'équipe bleue).
+  const BOT_WEAPONS = { blue: ['smg', 'sniper', 'lmg'], red: ['ar', 'dmr', 'shotgun', 'smg'] };
   let botsBuilt = false;
   function ensureBots() {
     if (botsBuilt) return;
     botsBuilt = true;
-    BOT_NAMES.blue.forEach((n, i) => makeBot(n, 'blue', i % 2 ? 'sniper' : 'ar'));
-    BOT_NAMES.red.forEach((n, i) => makeBot(n, 'red', i % 2 ? 'sniper' : 'ar'));
+    BOT_NAMES.blue.forEach((n, i) => makeBot(n, 'blue', BOT_WEAPONS.blue[i]));
+    BOT_NAMES.red.forEach((n, i) => makeBot(n, 'red', BOT_WEAPONS.red[i]));
   }
 
   /* ---- Joueurs distants (mode en ligne) : mêmes personnages, pilotés par le réseau ---- */
@@ -327,7 +465,7 @@
     death: $('deathOverlay'), respawnTxt: $('respawnTxt'),
     kdNum: $('kdNum'), dmgdir: $('dmgdir'),
     weaponName: $('weaponName'), weaponBtn: $('btn-weapon'), reloadBar: $('reloadBar'),
-    reloadRing: $('reloadRing'),
+    reloadRing: $('reloadRing'), loadout: $('loadout'), loadoutMsg: $('loadoutMsg'),
     nades: $('nades'), streak: $('streakMsg'), killMsg: $('killMsg'),
     scoreboard: $('scoreboard'), sbBlue: $('sbBlue'), sbRed: $('sbRed'),
   };
@@ -579,12 +717,17 @@
       e.switchEnd = 0;
       e.nades = CFG.nades;
       heat = 0;
-      ammoStore.ar = WEAPONS.ar.mag; // les deux chargeurs repartent pleins
-      ammoStore.sniper = WEAPONS.sniper.mag;
+      // l'équipement choisi dans le menu (B) s'applique à la réapparition
+      loadout.primary = chosenWeapon;
+      e.weapon = loadout.primary;
+      e.ammo = WEAPONS[e.weapon].mag;
+      ammoStore[loadout.primary] = WEAPONS[loadout.primary].mag; // chargeurs pleins
+      ammoStore.deagle = WEAPONS.deagle.mag;
       ui.death.classList.remove('show');
       updateHP();
       updateAmmo();
       updateNadeUI();
+      updateWeaponUI();
     } else {
       e.group.visible = true;
       e.group.rotation.set(0, 0, 0);
@@ -601,21 +744,22 @@
     }
   }
 
-  /* ================= Changement d'arme ================= */
+  /* ================= Changement d'arme (principale ↔ Deagle) ================= */
   // Chaque arme garde son propre chargeur entre deux changements
-  const ammoStore = { ar: WEAPONS.ar.mag, sniper: WEAPONS.sniper.mag };
+  const ammoStore = { ar: WEAPONS.ar.mag, deagle: WEAPONS.deagle.mag };
   function updateWeaponUI() {
     ui.weaponName.textContent = WEAPONS[player.weapon].label;
-    ui.weaponBtn.textContent = player.weapon === 'ar' ? 'AR' : 'SNIP';
-    gunModels.ar.visible = player.weapon === 'ar';
-    gunModels.sniper.visible = player.weapon === 'sniper';
+    ui.weaponBtn.textContent = WEAPONS[player.weapon].short;
+    for (const k in gunModels) gunModels[k].visible = k === player.weapon;
   }
   function switchWeapon(to) {
-    if (to === 'toggle') to = player.weapon === 'ar' ? 'sniper' : 'ar';
+    if (to === 'toggle') to = player.weapon === loadout.primary ? 'secondary' : 'primary';
+    if (to === 'primary') to = loadout.primary;
+    else if (to === 'secondary') to = 'deagle';
     if (!WEAPONS[to] || to === player.weapon || player.dead) return;
     ammoStore[player.weapon] = player.ammo;
     player.weapon = to;
-    player.ammo = ammoStore[to];
+    player.ammo = ammoStore[to] !== undefined ? ammoStore[to] : WEAPONS[to].mag;
     player.reloading = false; // un rechargement en cours est annulé
     player.switchEnd = now() + CFG.switchTime;
     player.nextShot = Math.max(player.nextShot, player.switchEnd);
@@ -737,6 +881,13 @@
 
   /* ================= Tir du joueur ================= */
   const _dir = new THREE.Vector3(), _muzzle = new THREE.Vector3(), _end = new THREE.Vector3();
+  // Décroissance des dégâts avec la distance (fusil à pompe) — même formule côté serveur
+  function falloff(w, d) {
+    if (!w.rangeFull || d <= w.rangeFull) return w.rangeFull && d >= w.rangeMax ? 0 : 1;
+    if (d >= w.rangeMax) return 0;
+    return 1 - (d - w.rangeFull) / (w.rangeMax - w.rangeFull) * (1 - w.dmgMin);
+  }
+  const _pellets = new Map(); // cible → dégâts cumulés du coup (plombs du pompe)
   function playerShoot() {
     const w = WEAPONS[player.weapon];
     player.nextShot = now() + w.interval;
@@ -746,41 +897,57 @@
     Sfx.shot(player.weapon);
     // recul : la caméra monte à chaque tir (avec une dérive latérale aléatoire),
     // et le spread s'élargit quand on maintient la rafale (chauffe)
-    heat = Math.min(8, heat + 1);
+    heat = Math.min(8, heat + (w.heatPerShot || 1));
     player.pitch += w.kick * (0.8 + Math.random() * 0.4);
     player.yaw += (Math.random() - 0.5) * w.kick * 0.6;
-    camera.getWorldDirection(_dir);
-    const spread = (Input.ads ? w.spreadAds : w.spreadHip) * (1 + heat * 0.16);
-    _dir.x += (Math.random() - 0.5) * spread * 2;
-    _dir.y += (Math.random() - 0.5) * spread * 2;
-    _dir.z += (Math.random() - 0.5) * spread * 2;
-    _dir.normalize();
     camera.localToWorld(_muzzle.set(w.muzzle[0], w.muzzle[1], w.muzzle[2])); // bout du canon
     Effects.muzzle(_muzzle);
-    shootRay.set(camera.position, _dir);
-    shootRay.far = Infinity;
+    // fusil à pompe : gerbe fixe de plombs, à peine resserrée en visée
+    const spread = w.pellets
+      ? w.pspread * (Input.ads ? 0.75 : 1)
+      : (Input.ads ? w.spreadAds : w.spreadHip) * (1 + heat * 0.16);
     const targets = world.solids.slice();
     for (const e of entities) if (e !== player && !e.dead) targets.push(...e.parts);
-    const hits = shootRay.intersectObjects(targets, false);
-    if (hits.length) {
-      _end.copy(hits[0].point);
-      const ref = hits[0].object.userData.botRef;
-      if (ref && ref.team !== player.team) {
-        const head = hits[0].object.userData.part === 'head';
-        Effects.impact(_end, 0xc0392b);
-        // en ligne, le serveur valide et applique les dégâts (hitmarker optimiste)
-        if (mode === 'online') Net.hit(ref.id, head, player.weapon);
-        else applyDamage(ref, w.dmg * (head ? 2 : 1), player, head);
-        showHitmarker(head);
-        if (head) Sfx.headshot(); else Sfx.hit();
+    _pellets.clear();
+    for (let i = 0; i < (w.pellets || 1); i++) {
+      camera.getWorldDirection(_dir);
+      _dir.x += (Math.random() - 0.5) * spread * 2;
+      _dir.y += (Math.random() - 0.5) * spread * 2;
+      _dir.z += (Math.random() - 0.5) * spread * 2;
+      _dir.normalize();
+      shootRay.set(camera.position, _dir);
+      shootRay.far = Infinity;
+      const hits = shootRay.intersectObjects(targets, false);
+      if (hits.length) {
+        _end.copy(hits[0].point);
+        const ref = hits[0].object.userData.botRef;
+        if (ref && ref.team !== player.team) {
+          const head = hits[0].object.userData.part === 'head';
+          const f = falloff(w, hits[0].distance);
+          let rec = _pellets.get(ref);
+          if (!rec) _pellets.set(ref, rec = { dmg: 0, nb: 0, nh: 0, head: false });
+          rec.dmg += w.dmg * (head ? (w.headMul || 2) : 1) * f;
+          if (f > 0) { if (head) rec.nh++; else rec.nb++; }
+          rec.head = rec.head || head;
+          Effects.impact(_end, 0xc0392b);
+        } else {
+          Effects.impact(_end, 0xffd257);
+        }
       } else {
-        Effects.impact(_end, 0xffd257);
+        _end.copy(camera.position).addScaledVector(_dir, 80);
       }
-    } else {
-      _end.copy(camera.position).addScaledVector(_dir, 80);
+      Effects.tracer(_muzzle, _end);
+      if (i === 0 && mode === 'online') Net.shoot(_muzzle, _end, player.weapon);
     }
-    Effects.tracer(_muzzle, _end);
-    if (mode === 'online') Net.shoot(_muzzle, _end, player.weapon);
+    // dégâts appliqués une fois par cible (les plombs du pompe sont cumulés)
+    for (const [ref, rec] of _pellets) {
+      if (rec.dmg <= 0) continue;
+      // en ligne, le serveur valide et applique les dégâts (hitmarker optimiste)
+      if (mode === 'online') Net.hit(ref.id, rec.head, player.weapon, rec.nb, rec.nh);
+      else applyDamage(ref, rec.dmg, player, rec.head);
+      showHitmarker(rec.head);
+      if (rec.head) Sfx.headshot(); else Sfx.hit();
+    }
   }
 
   /* ================= Mise à jour du joueur ================= */
@@ -820,6 +987,7 @@
     const sprinting = !Input.ads && !Input.crouch && len > 0.1 &&
       (Input.sprint || (Input.isTouch && Math.hypot(Input.move.x, Input.move.y) > 0.95));
     const sp = CFG.moveSpeed * (Input.crouch ? CFG.crouchMul : Input.ads ? CFG.adsSpeedMul : sprinting ? CFG.sprintMul : 1)
+      * (WEAPONS[player.weapon].speed || 1) // arme légère = rapide, LMG = lourde
       * (rushed() ? 1.25 : 1); // killstreak RUSH
     const px0 = player.pos.x, pz0 = player.pos.z;
     tryAxis(player, 'x', mx * sp * dt);
@@ -959,7 +1127,8 @@
       else if (d < 8) botMove(b, -dx, -dz, dt, 2.2);
       b.lastKnown.copy(t.pos); // mémorisée pour la chasse si la cible disparaît
       // tir : probabilité de toucher selon la distance + traçante/flash/son
-      if (!b.reloading && now() >= b.nextShot) {
+      // (le fusil à pompe ne tire qu'à courte portée : botMaxD)
+      if (!b.reloading && now() >= b.nextShot && d <= (w.botMaxD || 60)) {
         b.nextShot = now() + w.botInterval;
         b.ammo--;
         if (b.ammo <= 0) { b.reloading = true; b.reloadEnd = now() + w.reloadT; }
@@ -989,7 +1158,8 @@
         if (hit) {
           const head = Math.random() < 0.12;
           if (!t.isPlayer) Effects.impact(_botEnd, 0xc0392b);
-          applyDamage(t, w.dmg * (head ? 2 : 1), b, head);
+          // botDmg : dégâts forfaitaires du pompe (gerbe non simulée pour les bots)
+          applyDamage(t, (w.botDmg || w.dmg) * (head ? 2 : 1), b, head);
         }
       }
     } else {
@@ -1084,6 +1254,7 @@
   function endGame(team) {
     state = 'over';
     sbPinned = false;
+    setLoadout(false);
     setScoreboard(false);
     radar.classList.remove('show');
     ui.winTitle.textContent = team === player.team ? '🏆 Victoire des ' + TEAM[team].name + ' !' : '💀 Défaite… Les ' + TEAM[team].name + ' gagnent';
@@ -1116,20 +1287,65 @@
     if (e.code === 'KeyM') { Sfx.toggleMute(); updateMuteUI(); }
   });
 
-  let chosenWeapon = 'ar';
-  document.querySelectorAll('.wcard').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.wcard').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      chosenWeapon = btn.dataset.weapon;
-    });
-  });
+  /* ---- Équipement : arme principale au choix + Deagle en secondaire ----
+     Les cartes sont générées depuis WEAPONS dans le menu principal ET dans le
+     menu d'équipement en jeu (touche B / bouton 🎒). En pleine partie, le choix
+     s'applique à la prochaine réapparition (style Call of). */
+  const PRIMARIES = ['ar', 'smg', 'shotgun', 'dmr', 'lmg', 'sniper'];
+  let chosenWeapon = localStorage.getItem('blocops-weapon');
+  if (!PRIMARIES.includes(chosenWeapon)) chosenWeapon = 'ar';
+  const loadout = { primary: chosenWeapon }; // arme réellement en main (le choix attend le respawn)
+  function selectWeapon(key) {
+    chosenWeapon = key;
+    localStorage.setItem('blocops-weapon', key);
+    document.querySelectorAll('.wcard').forEach(b =>
+      b.classList.toggle('selected', b.dataset.weapon === key));
+    if (state === 'play') {
+      ui.loadoutMsg.textContent = key === loadout.primary
+        ? '' : '✔ ' + WEAPONS[key].label + ' — équipé à ta prochaine réapparition';
+    }
+  }
+  function renderWeaponCards(el) {
+    el.innerHTML = '';
+    for (const key of PRIMARIES) {
+      const w = WEAPONS[key];
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'wcard' + (key === chosenWeapon ? ' selected' : '');
+      b.dataset.weapon = key;
+      b.innerHTML = `<span class="wname">${w.label}</span>` +
+        w.desc.map(s => `<span class="wstat">${s}</span>`).join('');
+      b.addEventListener('click', () => selectWeapon(key));
+      el.appendChild(b);
+    }
+  }
+  renderWeaponCards($('menuWeapons'));
+  renderWeaponCards($('loadoutWeapons'));
+
+  /* ---- Menu d'équipement en jeu (touche B / bouton 🎒 mobile) ---- */
+  let loadoutOpen = false;
+  function setLoadout(open) {
+    if (open === loadoutOpen) return;
+    loadoutOpen = open;
+    ui.loadout.classList.toggle('hidden', !open);
+    if (open) {
+      ui.loadoutMsg.textContent = '';
+      Input.fire = false;
+      if (!Input.isTouch && document.exitPointerLock) document.exitPointerLock();
+    } else if (!Input.isTouch && state === 'play') {
+      Input.requestLock(canvas);
+    }
+  }
+  $('btn-loadout-close').addEventListener('click', () => setLoadout(false));
   /* ---- Lancement d'une partie (solo ou en ligne) ---- */
   let touchReady = false;
   function startMatch(m) {
     mode = m;
     Sfx.unlock(); // création du contexte audio sur le geste utilisateur
-    player.weapon = chosenWeapon;
+    loadout.primary = chosenWeapon;
+    player.weapon = loadout.primary;
+    setLoadout(false);
+    Input.loadoutQueued = false;
     if (mode === 'solo') {
       ensureBots();
       player.team = 'blue';
@@ -1369,7 +1585,8 @@
     }
   });
   Input.onLockChange = locked => {
-    if (!locked && state === 'play' && !Input.isTouch) ui.resume.classList.remove('hidden');
+    // pas d'écran pause quand c'est le menu d'équipement qui a libéré la souris
+    if (!locked && state === 'play' && !Input.isTouch && !loadoutOpen) ui.resume.classList.remove('hidden');
     if (locked) ui.resume.classList.add('hidden');
   };
   canvas.addEventListener('click', () => {
@@ -1388,6 +1605,7 @@
     const dt = Math.min(0.05, t - last);
     last = t;
     if (state === 'play') {
+      if (Input.loadoutQueued) { Input.loadoutQueued = false; setLoadout(!loadoutOpen); }
       updatePlayer(dt);
       if (mode === 'solo') {
         for (const b of bots) updateBot(b, dt);

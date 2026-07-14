@@ -6,8 +6,9 @@ const Input = {
   lookStick: { x: 0, y: 0 },   // joystick droit mobile (-1..1)
   fire: false, ads: false, sprint: false, crouch: false,
   jumpQueued: false, reloadQueued: false, nadeQueued: false,
+  loadoutQueued: false,        // B / bouton 🎒 = menu d'équipement (consommé par game.js)
   scoreHeld: false,            // Tab maintenu = tableau des scores
-  weaponQueued: null,          // 'ar' | 'sniper' | 'toggle' (consommé par game.js)
+  weaponQueued: null,          // 'primary' | 'secondary' | 'toggle' (consommé par game.js)
   locked: false,
   onLockChange: null,
   isTouch: matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window,
@@ -31,8 +32,9 @@ const Input = {
     if (e.code === 'KeyR') Input.reloadQueued = true;
     if (e.code === 'KeyG') Input.nadeQueued = true;
     if (e.code === 'Tab') { Input.scoreHeld = true; e.preventDefault(); }
-    if (e.code === 'Digit1') Input.weaponQueued = 'ar';
-    if (e.code === 'Digit2') Input.weaponQueued = 'sniper';
+    if (e.code === 'Digit1') Input.weaponQueued = 'primary';
+    if (e.code === 'Digit2') Input.weaponQueued = 'secondary';
+    if (e.code === 'KeyB') Input.loadoutQueued = true;
     updMove();
   });
   addEventListener('keyup', e => {
@@ -124,6 +126,7 @@ const Input = {
     tap('#btn-reload', () => { Input.reloadQueued = true; });
     tap('#btn-nade', () => { Input.nadeQueued = true; });
     tap('#btn-weapon', () => { Input.weaponQueued = 'toggle'; });
+    tap('#btn-loadout', () => { Input.loadoutQueued = true; });
     const adsBtn = document.querySelector('#btn-ads');
     adsBtn.addEventListener('touchstart', e => {
       e.preventDefault();
